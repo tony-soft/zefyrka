@@ -1,4 +1,7 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:notus_format/notus_format.dart';
 
 import 'controller.dart';
@@ -155,7 +158,9 @@ class _LinkDialogState extends State<_LinkDialog> {
 typedef ToggleStyleButtonBuilder = Widget Function(
   BuildContext context,
   NotusAttribute attribute,
-  IconData icon,
+  IconData? icon,
+  String? text,
+  Widget? child,
   bool isToggled,
   VoidCallback? onPressed,
 );
@@ -166,7 +171,11 @@ class ToggleStyleButton extends StatefulWidget {
   final NotusAttribute attribute;
 
   /// The icon representing the style [attribute].
-  final IconData icon;
+  final IconData? icon;
+
+  final String? text;
+
+  final Widget? child;
 
   /// Controller attached to a Zefyr editor.
   final ZefyrController controller;
@@ -177,7 +186,9 @@ class ToggleStyleButton extends StatefulWidget {
   ToggleStyleButton({
     Key? key,
     required this.attribute,
-    required this.icon,
+    this.icon,
+    this.text,
+    this.child,
     required this.controller,
     this.childBuilder = defaultToggleStyleButtonBuilder,
   })  : assert(!attribute.isUnset),
@@ -194,8 +205,7 @@ class _ToggleStyleButtonState extends State<ToggleStyleButton> {
 
   void _didChangeEditingValue() {
     setState(() {
-      _isToggled =
-          widget.controller.getSelectionStyle().containsSame(widget.attribute);
+      _isToggled = widget.controller.getSelectionStyle().containsSame(widget.attribute);
     });
   }
 
@@ -228,12 +238,9 @@ class _ToggleStyleButtonState extends State<ToggleStyleButton> {
     // toggle style buttons (except the code block button itself) since there
     // is no point in applying styles to a unformatted block of text.
     // TODO: Add code block checks to heading and embed buttons as well.
-    final isInCodeBlock =
-        _selectionStyle.containsSame(NotusAttribute.block.code);
-    final isEnabled =
-        !isInCodeBlock || widget.attribute == NotusAttribute.block.code;
-    return widget.childBuilder(context, widget.attribute, widget.icon,
-        _isToggled, isEnabled ? _toggleAttribute : null);
+    final isInCodeBlock = _selectionStyle.containsSame(NotusAttribute.block.code);
+    final isEnabled = !isInCodeBlock || widget.attribute == NotusAttribute.block.code;
+    return widget.childBuilder(context, widget.attribute, widget.icon, widget.text, widget.child, _isToggled, isEnabled ? _toggleAttribute : null);
   }
 
   void _toggleAttribute() {
@@ -249,7 +256,9 @@ class _ToggleStyleButtonState extends State<ToggleStyleButton> {
 Widget defaultToggleStyleButtonBuilder(
   BuildContext context,
   NotusAttribute attribute,
-  IconData icon,
+  IconData? icon,
+  String? text,
+  Widget? child,
   bool isToggled,
   VoidCallback? onPressed,
 ) {
@@ -261,13 +270,26 @@ Widget defaultToggleStyleButtonBuilder(
           : theme.iconTheme.color
       : theme.disabledColor;
   final fillColor = isToggled ? theme.toggleableActiveColor : theme.canvasColor;
+
+  if (child == null) {
+    if (icon != null) {
+      child = Icon(icon, size: 18, color: iconColor);
+    } else if (text != null) {
+      child = Text(text, style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: iconColor));
+    }
+  }
+
   return ZIconButton(
     highlightElevation: 0,
     hoverElevation: 0,
     size: 32,
-    icon: Icon(icon, size: 18, color: iconColor),
+    icon: child,
     fillColor: fillColor,
-    onPressed: onPressed,
+    onPressed: () {
+      if (onPressed != null) onPressed();
+
+      ZefyrToolbar.of(context)?.hideSubToolbar();
+    },
   );
 }
 
@@ -279,12 +301,10 @@ Widget defaultToggleStyleButtonBuilder(
 class SelectHeadingStyleButton extends StatefulWidget {
   final ZefyrController controller;
 
-  const SelectHeadingStyleButton({Key? key, required this.controller})
-      : super(key: key);
+  const SelectHeadingStyleButton({Key? key, required this.controller}) : super(key: key);
 
   @override
-  _SelectHeadingStyleButtonState createState() =>
-      _SelectHeadingStyleButtonState();
+  _SelectHeadingStyleButtonState createState() => _SelectHeadingStyleButtonState();
 }
 
 class _SelectHeadingStyleButtonState extends State<SelectHeadingStyleButton> {
@@ -294,8 +314,7 @@ class _SelectHeadingStyleButtonState extends State<SelectHeadingStyleButton> {
 
   void _didChangeEditingValue() {
     setState(() {
-      _value = _selectionStyle.get(NotusAttribute.heading) ??
-          NotusAttribute.heading.unset;
+      _value = _selectionStyle.get(NotusAttribute.heading) ?? NotusAttribute.heading.unset;
     });
   }
 
@@ -306,8 +325,7 @@ class _SelectHeadingStyleButtonState extends State<SelectHeadingStyleButton> {
   @override
   void initState() {
     super.initState();
-    _value = _selectionStyle.get(NotusAttribute.heading) ??
-        NotusAttribute.heading.unset;
+    _value = _selectionStyle.get(NotusAttribute.heading) ?? NotusAttribute.heading.unset;
     widget.controller.addListener(_didChangeEditingValue);
   }
 
@@ -317,8 +335,7 @@ class _SelectHeadingStyleButtonState extends State<SelectHeadingStyleButton> {
     if (oldWidget.controller != widget.controller) {
       oldWidget.controller.removeListener(_didChangeEditingValue);
       widget.controller.addListener(_didChangeEditingValue);
-      _value = _selectionStyle.get(NotusAttribute.heading) ??
-          NotusAttribute.heading.unset;
+      _value = _selectionStyle.get(NotusAttribute.heading) ?? NotusAttribute.heading.unset;
     }
   }
 
@@ -334,8 +351,7 @@ class _SelectHeadingStyleButtonState extends State<SelectHeadingStyleButton> {
   }
 }
 
-Widget _selectHeadingStyleButtonBuilder(BuildContext context,
-    NotusAttribute? value, ValueChanged<NotusAttribute?> onSelected) {
+Widget _selectHeadingStyleButtonBuilder(BuildContext context, NotusAttribute? value, ValueChanged<NotusAttribute?> onSelected) {
   final style = TextStyle(fontSize: 12);
 
   final valueToText = {
@@ -392,6 +408,7 @@ class ZefyrToolbar extends StatefulWidget implements PreferredSizeWidget {
       bool hideItalicButton = false,
       bool hideUnderLineButton = false,
       bool hideStrikeThrough = false,
+      bool hideHighlightButton = false,
       bool hideHeadingStyle = false,
       bool hideListNumbers = false,
       bool hideListBullets = false,
@@ -436,12 +453,59 @@ class ZefyrToolbar extends StatefulWidget implements PreferredSizeWidget {
         ),
       ),
       Visibility(
-          visible: !hideHeadingStyle,
-          child: VerticalDivider(
-              indent: 16, endIndent: 16, color: Colors.grey.shade400)),
+        visible: !hideHighlightButton,
+        child: SubToolbarButton(
+          icon: FontAwesomeIcons.highlighter,
+          iconSize: 14,
+          controller: controller,
+          attribute: NotusAttribute.highlight,
+          children: [
+            ToggleStyleButton(
+              attribute: NotusAttribute.highlightYellow,
+              controller: controller,
+              child: _buildColorWidget(Colors.yellow[200]!),
+            ),
+            ToggleStyleButton(
+              attribute: NotusAttribute.highlightBlue,
+              controller: controller,
+              child: _buildColorWidget(Colors.blue[200]!),
+            ),
+            ToggleStyleButton(
+              attribute: NotusAttribute.highlightRed,
+              controller: controller,
+              child: _buildColorWidget(Colors.red[200]!),
+            ),
+          ],
+        ),
+      ),
+      Visibility(visible: !hideHeadingStyle, child: VerticalDivider(indent: 16, endIndent: 16, color: Colors.grey.shade400)),
+      // Visibility(visible: !hideHeadingStyle, child: SelectHeadingStyleButton(controller: controller)),
       Visibility(
-          visible: !hideHeadingStyle,
-          child: SelectHeadingStyleButton(controller: controller)),
+        visible: !hideHeadingStyle,
+        child: SubToolbarButton(
+          icon: Icons.format_size,
+          iconSize: 18,
+          controller: controller,
+          attribute: NotusAttribute.heading,
+          children: [
+            ToggleStyleButton(
+              attribute: NotusAttribute.heading.level1,
+              text: 'H1',
+              controller: controller,
+            ),
+            ToggleStyleButton(
+              attribute: NotusAttribute.heading.level2,
+              text: 'H2',
+              controller: controller,
+            ),
+            ToggleStyleButton(
+              attribute: NotusAttribute.heading.level3,
+              text: 'H3',
+              controller: controller,
+            ),
+          ],
+        ),
+      ),
       VerticalDivider(indent: 16, endIndent: 16, color: Colors.grey.shade400),
       Visibility(
         visible: !hideListNumbers,
@@ -467,10 +531,7 @@ class ZefyrToolbar extends StatefulWidget implements PreferredSizeWidget {
           icon: Icons.code,
         ),
       ),
-      Visibility(
-          visible: !hideListNumbers || !hideListBullets || !hideCodeBlock,
-          child: VerticalDivider(
-              indent: 16, endIndent: 16, color: Colors.grey.shade400)),
+      Visibility(visible: !hideListNumbers || !hideListBullets || !hideCodeBlock, child: VerticalDivider(indent: 16, endIndent: 16, color: Colors.grey.shade400)),
       Visibility(
         visible: !hideQuote,
         child: ToggleStyleButton(
@@ -479,12 +540,8 @@ class ZefyrToolbar extends StatefulWidget implements PreferredSizeWidget {
           icon: Icons.format_quote,
         ),
       ),
-      Visibility(
-          visible: !hideQuote,
-          child: VerticalDivider(
-              indent: 16, endIndent: 16, color: Colors.grey.shade400)),
-      Visibility(
-          visible: !hideLink, child: LinkStyleButton(controller: controller)),
+      Visibility(visible: !hideQuote, child: VerticalDivider(indent: 16, endIndent: 16, color: Colors.grey.shade400)),
+      Visibility(visible: !hideLink, child: LinkStyleButton(controller: controller)),
       Visibility(
         visible: !hideHorizontalRule,
         child: InsertEmbedButton(
@@ -500,21 +557,70 @@ class ZefyrToolbar extends StatefulWidget implements PreferredSizeWidget {
 
   @override
   Size get preferredSize => Size.fromHeight(kToolbarHeight);
+
+  static _ZefyrToolbarState? of(BuildContext context) {
+    return context.findAncestorStateOfType<_ZefyrToolbarState>();
+  }
+}
+
+Widget _buildColorWidget(Color color) {
+  return Container(
+    width: 20,
+    height: 20,
+    decoration: BoxDecoration(
+      shape: BoxShape.circle,
+      color: color,
+      border: Border.fromBorderSide(BorderSide(color: Colors.grey[200]!, width: 1.0)),
+    ),
+  );
 }
 
 class _ZefyrToolbarState extends State<ZefyrToolbar> {
+  List<Widget>? _subToolbarChildren;
+
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 8),
-      constraints: BoxConstraints.tightFor(height: widget.preferredSize.height),
+      constraints: BoxConstraints.tightFor(width: MediaQuery.of(context).size.width, height: widget.preferredSize.height),
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 8),
         child: Row(
-          children: widget.children,
+          children: _buildToolbarChildren(context),
         ),
       ),
     );
+  }
+
+  List<Widget> _buildToolbarChildren(BuildContext context) {
+    if (_subToolbarChildren == null) {
+      return widget.children;
+    }
+
+    return [
+      ZIconButton(
+          size: 32,
+          icon: Icon(
+            Icons.close,
+            size: 18.0,
+          ),
+          fillColor: Theme.of(context).canvasColor,
+          onPressed: () => hideSubToolbar()),
+      SizedBox(width: 8.0),
+      ..._subToolbarChildren!,
+    ];
+  }
+
+  void showSubToolbar(List<Widget>? children) {
+    setState(() {
+      _subToolbarChildren = children;
+    });
+  }
+
+  void hideSubToolbar() {
+    setState(() {
+      _subToolbarChildren = null;
+    });
   }
 }
 
@@ -606,13 +712,11 @@ class _ZDropdownButtonState<T> extends State<ZDropdownButton<T>> {
   void _showMenu() {
     final popupMenuTheme = PopupMenuTheme.of(context);
     final button = context.findRenderObject() as RenderBox;
-    final overlay =
-        Overlay.of(context)!.context.findRenderObject() as RenderBox;
+    final overlay = Overlay.of(context)!.context.findRenderObject() as RenderBox;
     final position = RelativeRect.fromRect(
       Rect.fromPoints(
         button.localToGlobal(Offset.zero, ancestor: overlay),
-        button.localToGlobal(button.size.bottomLeft(Offset.zero),
-            ancestor: overlay),
+        button.localToGlobal(button.size.bottomLeft(Offset.zero), ancestor: overlay),
       ),
       Offset.zero & overlay.size,
     );
@@ -643,13 +747,95 @@ class _ZDropdownButtonState<T> extends State<ZDropdownButton<T>> {
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 8.0),
         child: Row(
-          children: [
-            widget.child,
-            Expanded(child: Container()),
-            Icon(Icons.arrow_drop_down, size: 14)
-          ],
+          children: [widget.child, Expanded(child: Container()), Icon(Icons.arrow_drop_down, size: 14)],
         ),
       ),
+    );
+  }
+}
+
+/// 이 버튼을 누르면 서브 툴바가 나온다.
+class SubToolbarButton extends StatefulWidget {
+  final ZefyrController controller;
+  final IconData icon;
+  final double iconSize;
+  final List<Widget> children;
+  final NotusAttributeKey attribute;
+
+  const SubToolbarButton({
+    Key? key,
+    required this.controller,
+    required this.icon,
+    required this.children,
+    required this.attribute,
+    this.iconSize = 18,
+  }) : super(key: key);
+
+  @override
+  _SubToolbarButtonState createState() => _SubToolbarButtonState();
+}
+
+class _SubToolbarButtonState extends State<SubToolbarButton> {
+  NotusAttribute? _value;
+
+  NotusStyle get _selectionStyle => widget.controller.getSelectionStyle();
+
+  void _didChangeEditingValue() {
+    setState(() {
+      _value = _selectionStyle.get(widget.attribute);
+    });
+  }
+
+  void _selectAttribute(value) {
+    widget.controller.formatSelection(value);
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _value = _selectionStyle.get(widget.attribute);
+    widget.controller.addListener(_didChangeEditingValue);
+  }
+
+  @override
+  void didUpdateWidget(covariant SubToolbarButton oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.controller != widget.controller) {
+      oldWidget.controller.removeListener(_didChangeEditingValue);
+      widget.controller.addListener(_didChangeEditingValue);
+      _value = _selectionStyle.get(widget.attribute);
+    }
+  }
+
+  @override
+  void dispose() {
+    widget.controller.removeListener(_didChangeEditingValue);
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    var theme = Theme.of(context);
+    var isToggled = _value != null;
+    final iconColor = isToggled ? theme.primaryIconTheme.color : theme.iconTheme.color;
+    final fillColor = isToggled ? theme.toggleableActiveColor : theme.canvasColor;
+
+    return ZIconButton(
+      highlightElevation: 0,
+      hoverElevation: 0,
+      size: 32,
+      icon: Icon(
+        widget.icon,
+        size: widget.iconSize,
+        color: iconColor,
+      ),
+      fillColor: fillColor,
+      onPressed: () {
+        ZefyrToolbar.of(context)?.showSubToolbar(widget.children);
+        // final index = controller.selection.baseOffset;
+        // final length = controller.selection.extentOffset - index;
+        // controller.replaceText(index, length, BlockEmbed.horizontalRule);
+      },
     );
   }
 }

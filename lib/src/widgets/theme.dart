@@ -37,8 +37,7 @@ class ZefyrTheme extends InheritedWidget {
   static ZefyrThemeData? of(BuildContext context, {bool nullOk = false}) {
     final widget = context.dependOnInheritedWidgetOfExactType<ZefyrTheme>();
     if (widget == null && nullOk) return null;
-    assert(widget != null,
-        '$ZefyrTheme.of() called with a context that does not contain a ZefyrEditor.');
+    assert(widget != null, '$ZefyrTheme.of() called with a context that does not contain a ZefyrEditor.');
     return widget!.data;
   }
 }
@@ -67,6 +66,15 @@ class ZefyrThemeData {
 
   /// Style of strikethrough text.
   final TextStyle strikethrough;
+
+  /// Style of highlight yellow text.
+  final TextStyle highlightYellow;
+
+  /// Style of highlight blue text.
+  final TextStyle highlightBlue;
+
+  /// Style of highlight red text.
+  final TextStyle highlightRed;
 
   /// Style of links in text.
   final TextStyle link;
@@ -101,6 +109,9 @@ class ZefyrThemeData {
     required this.heading1,
     required this.heading2,
     required this.heading3,
+    required this.highlightYellow,
+    required this.highlightBlue,
+    required this.highlightRed,
     required this.lists,
     required this.quote,
     required this.code,
@@ -134,6 +145,21 @@ class ZefyrThemeData {
       italic: TextStyle(fontStyle: FontStyle.italic),
       underline: TextStyle(decoration: TextDecoration.underline),
       strikethrough: TextStyle(decoration: TextDecoration.lineThrough),
+      highlightYellow: TextStyle(
+        decoration: TextDecoration.underline,
+        decorationThickness: 10,
+        decorationColor: Colors.yellow.withOpacity(0.3),
+      ),
+      highlightRed: TextStyle(
+        decoration: TextDecoration.underline,
+        decorationThickness: 10,
+        decorationColor: Colors.red.withOpacity(0.3),
+      ),
+      highlightBlue: TextStyle(
+        decoration: TextDecoration.underline,
+        decorationThickness: 10,
+        decorationColor: Colors.blue.withOpacity(0.3),
+      ),
       link: TextStyle(
         color: themeData.colorScheme.secondary,
         decoration: TextDecoration.underline,
@@ -206,6 +232,9 @@ class ZefyrThemeData {
     TextStyle? italic,
     TextStyle? underline,
     TextStyle? strikethrough,
+    TextStyle? highlightYellow,
+    TextStyle? highlightRed,
+    TextStyle? highlightBlue,
     TextStyle? link,
     TextBlockTheme? paragraph,
     TextBlockTheme? heading1,
@@ -220,6 +249,9 @@ class ZefyrThemeData {
       italic: italic ?? this.italic,
       underline: underline ?? this.underline,
       strikethrough: strikethrough ?? this.strikethrough,
+      highlightYellow: highlightYellow ?? this.highlightYellow,
+      highlightRed: highlightRed ?? this.highlightRed,
+      highlightBlue: highlightBlue ?? this.highlightBlue,
       link: link ?? this.link,
       paragraph: paragraph ?? this.paragraph,
       heading1: heading1 ?? this.heading1,
@@ -237,6 +269,9 @@ class ZefyrThemeData {
       italic: other.italic,
       underline: other.underline,
       strikethrough: other.strikethrough,
+      highlightYellow: other.highlightYellow,
+      highlightRed: other.highlightRed,
+      highlightBlue: other.highlightBlue,
       link: other.link,
       paragraph: other.paragraph,
       heading1: other.heading1,

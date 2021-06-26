@@ -16,7 +16,6 @@ example/ios/.symlinks
 example/ios/Flutter/Generated.xcconfig
 example/ios/Flutter/flutter_export_environment.sh
 example/ios/Podfile.lock
-example/ios/Runner.xcodeproj/project.pbxproj
 example/ios/Runner.xcodeproj/project.xcworkspace/contents.xcworkspacedata
 doc/api/
 build/

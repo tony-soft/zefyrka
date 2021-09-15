@@ -13,7 +13,7 @@ import 'package:zefyrka/src/widgets/baseline_proxy.dart';
 import 'package:zefyrka/zefyrka.dart';
 
 import '../rendering/editor.dart';
-import '../services/keyboard.dart';
+import '../services/keyboard.dart' as keyboard;
 import 'controller.dart';
 import 'cursor.dart';
 import 'editable_text_block.dart';
@@ -124,6 +124,9 @@ class ZefyrEditor extends StatefulWidget {
   /// the text field from the clipboard.
   final bool enableInteractiveSelection;
 
+  /// Whether to enable auto-suggestions in the system keyboard (where applicable).
+  final bool enableSuggestions;
+
   /// The minimum height to be occupied by this editor.
   ///
   /// This only has effect if [scrollable] is set to `true` and [expands] is
@@ -209,6 +212,7 @@ class ZefyrEditor extends StatefulWidget {
     this.showCursor = true,
     this.readOnly = false,
     this.enableInteractiveSelection = true,
+    this.enableSuggestions = false,
     this.minHeight,
     this.maxHeight,
     this.scrollAreaMinHeight,
@@ -296,7 +300,7 @@ class _ZefyrEditorState extends State<ZefyrEditor> implements EditorTextSelectio
     final child = RawEditor(
       key: _editorKey,
       controller: widget.controller,
-      focusNode: widget.focusNode!,
+      focusNode: widget.focusNode ?? FocusNode(),
       scrollController: widget.scrollController,
       clipboardController: widget.clipboardController,
       scrollable: widget.scrollable,
@@ -305,6 +309,7 @@ class _ZefyrEditorState extends State<ZefyrEditor> implements EditorTextSelectio
       showCursor: widget.showCursor,
       readOnly: widget.readOnly,
       enableInteractiveSelection: widget.enableInteractiveSelection,
+      enableSuggestions: widget.enableSuggestions,
       minHeight: widget.minHeight,
       maxHeight: widget.maxHeight,
       scrollAreaMinHeight: widget.scrollAreaMinHeight,
@@ -348,7 +353,7 @@ class _ZefyrEditorSelectionGestureDetectorBuilder extends EditorTextSelectionGes
   void onForcePressStart(ForcePressDetails details) {
     super.onForcePressStart(details);
     if (delegate.selectionEnabled && shouldShowSelectionToolbar) {
-      editor!.showToolbar();
+      editor.showToolbar();
     }
   }
 
@@ -363,7 +368,7 @@ class _ZefyrEditorSelectionGestureDetectorBuilder extends EditorTextSelectionGes
       switch (Theme.of(_state.context).platform) {
         case TargetPlatform.iOS:
         case TargetPlatform.macOS:
-          renderEditor!.selectPositionAt(
+          renderEditor.selectPositionAt(
             from: details.globalPosition,
             cause: SelectionChangedCause.longPress,
           );
@@ -372,7 +377,7 @@ class _ZefyrEditorSelectionGestureDetectorBuilder extends EditorTextSelectionGes
         case TargetPlatform.fuchsia:
         case TargetPlatform.linux:
         case TargetPlatform.windows:
-          renderEditor!.selectWordsInRange(
+          renderEditor.selectWordsInRange(
             from: details.globalPosition - details.offsetFromOrigin,
             to: details.globalPosition,
             cause: SelectionChangedCause.longPress,
@@ -405,7 +410,7 @@ class _ZefyrEditorSelectionGestureDetectorBuilder extends EditorTextSelectionGes
 
   @override
   void onSingleTapUp(TapUpDetails details) {
-    editor!.hideToolbar();
+    editor.hideToolbar();
 
     // TODO: Explore if we can forward tap up events to the TextSpan gesture detector
     var urlLaunched = _launchUrlIfNeeded(details);
@@ -419,13 +424,13 @@ class _ZefyrEditorSelectionGestureDetectorBuilder extends EditorTextSelectionGes
             case PointerDeviceKind.stylus:
             case PointerDeviceKind.invertedStylus:
               // Precise devices should place the cursor at a precise position.
-              renderEditor!.selectPosition(cause: SelectionChangedCause.tap);
+              renderEditor.selectPosition(cause: SelectionChangedCause.tap);
               break;
             case PointerDeviceKind.touch:
             case PointerDeviceKind.unknown:
               // On macOS/iOS/iPadOS a touch tap places the cursor at the edge
               // of the word.
-              renderEditor!.selectWordEdge(cause: SelectionChangedCause.tap);
+              renderEditor.selectWordEdge(cause: SelectionChangedCause.tap);
               break;
           }
           break;
@@ -433,7 +438,7 @@ class _ZefyrEditorSelectionGestureDetectorBuilder extends EditorTextSelectionGes
         case TargetPlatform.fuchsia:
         case TargetPlatform.linux:
         case TargetPlatform.windows:
-          renderEditor!.selectPosition(cause: SelectionChangedCause.tap);
+          renderEditor.selectPosition(cause: SelectionChangedCause.tap);
           break;
       }
     }
@@ -451,7 +456,7 @@ class _ZefyrEditorSelectionGestureDetectorBuilder extends EditorTextSelectionGes
       switch (Theme.of(_state.context).platform) {
         case TargetPlatform.iOS:
         case TargetPlatform.macOS:
-          renderEditor!.selectPositionAt(
+          renderEditor.selectPositionAt(
             from: details.globalPosition,
             cause: SelectionChangedCause.longPress,
           );
@@ -460,7 +465,7 @@ class _ZefyrEditorSelectionGestureDetectorBuilder extends EditorTextSelectionGes
         case TargetPlatform.fuchsia:
         case TargetPlatform.linux:
         case TargetPlatform.windows:
-          renderEditor!.selectWord(cause: SelectionChangedCause.longPress);
+          renderEditor.selectWord(cause: SelectionChangedCause.longPress);
           Feedback.forLongPress(_state.context);
           break;
       }
@@ -496,6 +501,7 @@ class RawEditor extends StatefulWidget {
       paste: true,
       selectAll: true,
     ),
+    this.enableSuggestions = true,
     this.cursorStyle,
     this.showSelectionHandles = false,
     this.selectionControls,
@@ -584,6 +590,9 @@ class RawEditor extends StatefulWidget {
   ///
   ///  * [TextCapitalization], for a description of each capitalization behavior.
   final TextCapitalization textCapitalization;
+
+  /// Whether to enable text suggestions in the keyboard when typing.
+  final bool enableSuggestions;
 
   /// The maximum height this editor can have.
   ///
@@ -685,7 +694,7 @@ abstract class EditorState extends State<RawEditor> {
 
   set textEditingValue(TextEditingValue value);
 
-  RenderEditor? get renderEditor;
+  RenderEditor get renderEditor;
 
   EditorTextSelectionOverlay? get selectionOverlay;
 
@@ -715,7 +724,7 @@ class RawEditorState extends EditorState
   FloatingCursorController? _floatingCursorController;
 
   // Keyboard
-  late KeyboardListener _keyboardListener;
+  late keyboard.KeyboardListener _keyboardListener;
 
   // Selection overlay
   @override
@@ -745,7 +754,7 @@ class RawEditorState extends EditorState
   ///
   /// This property is typically used to notify the renderer of input gestures.
   @override
-  RenderEditor? get renderEditor => _editorKey.currentContext!.findRenderObject() as RenderEditor?;
+  RenderEditor get renderEditor => _editorKey.currentContext!.findRenderObject() as RenderEditor;
 
   /// Express interest in interacting with the keyboard.
   ///
@@ -816,7 +825,7 @@ class RawEditorState extends EditorState
     );
 
     // Keyboard
-    _keyboardListener = KeyboardListener(
+    _keyboardListener = keyboard.KeyboardListener(
       onCursorMovement: handleCursorMovement,
       onShortcut: handleShortcut,
       onDelete: handleDelete,
@@ -957,8 +966,10 @@ class RawEditorState extends EditorState
 
   void _handleFocusChanged() {
     openOrCloseConnection();
+
     _cursorController!.startOrStopCursorTimerIfNeeded(_hasFocus, widget.controller.selection);
-    _updateOrDisposeSelectionOverlayIfNeeded();
+    SchedulerBinding.instance!.addPostFrameCallback((Duration _) => _updateOrDisposeSelectionOverlayIfNeeded());
+
     if (_hasFocus) {
       // Listen for changing viewInsets, which indicates keyboard showing up.
       WidgetsBinding.instance!.addObserver(this);
@@ -1034,6 +1045,7 @@ class RawEditorState extends EditorState
 
       final viewport = RenderAbstractViewport.of(renderEditor)!;
       final editorOffset = renderEditor!.localToGlobal(Offset(0.0, 0.0), ancestor: viewport);
+
       final offsetInViewport = _scrollController!.offset + editorOffset.dy;
 
       final offset = renderEditor!.getOffsetToRevealCursor(

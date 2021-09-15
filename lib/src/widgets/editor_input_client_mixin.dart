@@ -6,8 +6,7 @@ import 'package:zefyrka/util.dart';
 
 import 'editor.dart';
 
-mixin RawEditorStateTextInputClientMixin on EditorState
-    implements TextInputClient {
+mixin RawEditorStateTextInputClientMixin on EditorState implements TextInputClient {
   final List<TextEditingValue?> _sentRemoteValues = [];
   TextInputConnection? _textInputConnection;
   TextEditingValue? _lastKnownRemoteTextEditingValue;
@@ -27,15 +26,12 @@ mixin RawEditorStateTextInputClientMixin on EditorState
   /// - Changing the selection using a physical keyboard.
   bool get shouldCreateInputConnection => kIsWeb || !widget.readOnly;
 
-  void _remoteValueChanged(
-      int start, String deleted, String inserted, TextSelection selection) {
-    widget.controller
-        .replaceText(start, deleted.length, inserted, selection: selection);
+  void _remoteValueChanged(int start, String deleted, String inserted, TextSelection selection) {
+    widget.controller.replaceText(start, deleted.length, inserted, selection: selection);
   }
 
   /// Returns `true` if there is open input connection.
-  bool get hasConnection =>
-      _textInputConnection != null && _textInputConnection!.attached;
+  bool get hasConnection => _textInputConnection != null && _textInputConnection!.attached;
 
   /// Opens or closes input connection based on the current state of
   /// [focusNode] and [value].
@@ -60,7 +56,7 @@ mixin RawEditorStateTextInputClientMixin on EditorState
           inputType: TextInputType.multiline,
           readOnly: widget.readOnly,
           obscureText: false,
-          autocorrect: true,
+          autocorrect: widget.enableSuggestions,
           inputAction: TextInputAction.newline,
           keyboardAppearance: widget.keyboardAppearance,
           textCapitalization: widget.textCapitalization,
@@ -117,8 +113,7 @@ mixin RawEditorStateTextInputClientMixin on EditorState
 
   // Start TextInputClient implementation
   @override
-  TextEditingValue? get currentTextEditingValue =>
-      _lastKnownRemoteTextEditingValue;
+  TextEditingValue? get currentTextEditingValue => _lastKnownRemoteTextEditingValue;
 
   // autofill is not needed
   @override
@@ -152,8 +147,7 @@ mixin RawEditorStateTextInputClientMixin on EditorState
     }
 
     // Check if only composing range changed.
-    if (_lastKnownRemoteTextEditingValue!.text == value.text &&
-        _lastKnownRemoteTextEditingValue!.selection == value.selection) {
+    if (_lastKnownRemoteTextEditingValue!.text == value.text && _lastKnownRemoteTextEditingValue!.selection == value.selection) {
       // This update only modifies composing range. Since we don't keep track
       // of composing range in Zefyr we just need to update last known value
       // here.
@@ -175,8 +169,7 @@ mixin RawEditorStateTextInputClientMixin on EditorState
       final text = value.text;
       final cursorPosition = value.selection.extentOffset;
       final diff = fastDiff(oldText, text, cursorPosition);
-      _remoteValueChanged(
-          diff.start, diff.deleted, diff.inserted, value.selection);
+      _remoteValueChanged(diff.start, diff.deleted, diff.inserted, value.selection);
     } catch (e, trace) {
       FlutterError.reportError(FlutterErrorDetails(
         exception: e,
@@ -223,8 +216,8 @@ mixin RawEditorStateTextInputClientMixin on EditorState
       // Asking for renderEditor.size here can cause errors if layout hasn't
       // occurred yet. So we schedule a post frame callback instead.
       SchedulerBinding.instance!.addPostFrameCallback((Duration _) {
-        final size = renderEditor!.size;
-        final transform = renderEditor!.getTransformTo(null);
+        final size = renderEditor.size;
+        final transform = renderEditor.getTransformTo(null);
         _textInputConnection!.setEditableSizeAndTransform(size, transform);
       });
     }

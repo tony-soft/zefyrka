@@ -76,6 +76,9 @@ class ZefyrField extends StatefulWidget {
   /// the text field from the clipboard.
   final bool enableInteractiveSelection;
 
+  /// Whether to enable auto-suggestions in the system keyboard (where applicable).
+  final bool enableSuggestions;
+
   /// The minimum height to be occupied by this editor.
   ///
   /// This only has effect if [scrollable] is set to `true` and [expands] is
@@ -149,6 +152,7 @@ class ZefyrField extends StatefulWidget {
     this.showCursor = true,
     this.readOnly = false,
     this.enableInteractiveSelection = true,
+    this.enableSuggestions = false,
     this.minHeight,
     this.maxHeight,
     this.expands = false,
@@ -202,6 +206,7 @@ class _ZefyrFieldState extends State<ZefyrField> {
       showCursor: widget.showCursor,
       readOnly: widget.readOnly,
       enableInteractiveSelection: widget.enableInteractiveSelection,
+      enableSuggestions: widget.enableSuggestions,
       minHeight: widget.minHeight,
       maxHeight: widget.maxHeight,
       expands: widget.expands,
@@ -228,8 +233,7 @@ class _ZefyrFieldState extends State<ZefyrField> {
     }
 
     return AnimatedBuilder(
-      animation:
-          Listenable.merge(<Listenable?>[widget.focusNode, widget.controller]),
+      animation: Listenable.merge(<Listenable?>[widget.focusNode, widget.controller]),
       builder: (BuildContext context, Widget? child) {
         return InputDecorator(
           decoration: _getEffectiveDecoration(),
@@ -244,9 +248,7 @@ class _ZefyrFieldState extends State<ZefyrField> {
   }
 
   InputDecoration _getEffectiveDecoration() {
-    final effectiveDecoration = (widget.decoration ?? const InputDecoration())
-        .applyDefaults(Theme.of(context).inputDecorationTheme)
-        .copyWith(
+    final effectiveDecoration = (widget.decoration ?? const InputDecoration()).applyDefaults(Theme.of(context).inputDecorationTheme).copyWith(
           enabled: !widget.readOnly,
           hintMaxLines: widget.decoration?.hintMaxLines,
         );

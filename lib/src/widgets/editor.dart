@@ -388,16 +388,16 @@ class _ZefyrEditorSelectionGestureDetectorBuilder extends EditorTextSelectionGes
   }
 
   bool _launchUrlIfNeeded(TapUpDetails details) {
-    final pos = renderEditor!.getPositionForOffset(details.globalPosition);
-    final result = editor!.widget.controller.document.lookupLine(pos.offset);
+    final pos = renderEditor.getPositionForOffset(details.globalPosition);
+    final result = editor.widget.controller.document.lookupLine(pos.offset);
     if (result.node == null) return false;
     final line = result.node as LineNode;
     final segmentResult = line.lookup(result.offset);
     if (segmentResult.node == null) return false;
     final segment = segmentResult.node as LeafNode;
-    if (segment.style.contains(NotusAttribute.link) && editor!.widget.onLaunchUrl != null) {
-      if (editor!.widget.readOnly) {
-        editor!.widget.onLaunchUrl!(segment.style.get(NotusAttribute.link)!.value!);
+    if (segment.style.contains(NotusAttribute.link) && editor.widget.onLaunchUrl != null) {
+      if (editor.widget.readOnly) {
+        editor.widget.onLaunchUrl!(segment.style.get(NotusAttribute.link)!.value!);
         return true;
       } else {
         // TODO: Implement a toolbar to display the URL and allow to launch it.
@@ -1044,11 +1044,11 @@ class RawEditorState extends EditorState
       _showCaretOnScreenScheduled = false;
 
       final viewport = RenderAbstractViewport.of(renderEditor)!;
-      final editorOffset = renderEditor!.localToGlobal(Offset(0.0, 0.0), ancestor: viewport);
+      final editorOffset = renderEditor.localToGlobal(Offset(0.0, 0.0), ancestor: viewport);
 
       final offsetInViewport = _scrollController!.offset + editorOffset.dy;
 
-      final offset = renderEditor!.getOffsetToRevealCursor(
+      final offset = renderEditor.getOffsetToRevealCursor(
         _scrollController!.position.viewportDimension,
         _scrollController!.offset,
         offsetInViewport,

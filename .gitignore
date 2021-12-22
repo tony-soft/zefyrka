@@ -19,5 +19,5 @@ example/ios/Podfile.lock
 example/ios/Runner.xcodeproj/project.xcworkspace/contents.xcworkspacedata
 doc/api/
 build/
-
+.fvm/
 example/feather

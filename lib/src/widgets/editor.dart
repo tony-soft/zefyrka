@@ -26,7 +26,8 @@ import 'text_selection.dart';
 import 'theme.dart';
 
 /// Builder function for embeddable objects in [ZefyrEditor].
-typedef ZefyrEmbedBuilder = Widget Function(BuildContext context, EmbedNode node);
+typedef ZefyrEmbedBuilder = Widget Function(
+    BuildContext context, EmbedNode node);
 
 /// Default implementation of a builder function for embeddable objects in
 /// Zefyr.
@@ -41,7 +42,8 @@ Widget defaultZefyrEmbedBuilder(BuildContext context, EmbedNode node) {
       color: Colors.grey.shade200,
     );
   }
-  throw UnimplementedError('Embeddable type "${node.value.type}" is not supported by default embed '
+  throw UnimplementedError(
+      'Embeddable type "${node.value.type}" is not supported by default embed '
       'builder of ZefyrEditor. You must pass your own builder function to '
       'embedBuilder property of ZefyrEditor or ZefyrField widgets.');
 }
@@ -230,7 +232,8 @@ class ZefyrEditor extends StatefulWidget {
   _ZefyrEditorState createState() => _ZefyrEditorState();
 }
 
-class _ZefyrEditorState extends State<ZefyrEditor> implements EditorTextSelectionGestureDetectorBuilderDelegate {
+class _ZefyrEditorState extends State<ZefyrEditor>
+    implements EditorTextSelectionGestureDetectorBuilderDelegate {
   final GlobalKey<EditorState> _editorKey = GlobalKey<EditorState>();
 
   @override
@@ -243,7 +246,8 @@ class _ZefyrEditorState extends State<ZefyrEditor> implements EditorTextSelectio
   @override
   bool get selectionEnabled => widget.enableInteractiveSelection;
 
-  late EditorTextSelectionGestureDetectorBuilder _selectionGestureDetectorBuilder;
+  late EditorTextSelectionGestureDetectorBuilder
+      _selectionGestureDetectorBuilder;
 
   void _requestKeyboard() {
     _editorKey.currentState!.requestKeyboard();
@@ -252,10 +256,14 @@ class _ZefyrEditorState extends State<ZefyrEditor> implements EditorTextSelectio
   @override
   void initState() {
     super.initState();
-    _selectionGestureDetectorBuilder = _ZefyrEditorSelectionGestureDetectorBuilder(state: this);
+    _selectionGestureDetectorBuilder =
+        _ZefyrEditorSelectionGestureDetectorBuilder(state: this);
   }
 
-  static const Set<TargetPlatform> _mobilePlatforms = {TargetPlatform.iOS, TargetPlatform.android};
+  static const Set<TargetPlatform> _mobilePlatforms = {
+    TargetPlatform.iOS,
+    TargetPlatform.android
+  };
 
   @override
   Widget build(BuildContext context) {
@@ -270,7 +278,8 @@ class _ZefyrEditorState extends State<ZefyrEditor> implements EditorTextSelectio
     late Color selectionColor;
     Radius? cursorRadius;
 
-    final showSelectionHandles = widget.showSelectionHandles ?? _mobilePlatforms.contains(theme.platform);
+    final showSelectionHandles = widget.showSelectionHandles ??
+        _mobilePlatforms.contains(theme.platform);
 
     switch (theme.platform) {
       case TargetPlatform.iOS:
@@ -279,10 +288,13 @@ class _ZefyrEditorState extends State<ZefyrEditor> implements EditorTextSelectio
         textSelectionControls = cupertinoTextSelectionControls;
         paintCursorAboveText = true;
         cursorOpacityAnimates = true;
-        cursorColor ??= selectionTheme.cursorColor ?? cupertinoTheme.primaryColor;
-        selectionColor = selectionTheme.selectionColor ?? cupertinoTheme.primaryColor.withOpacity(0.40);
+        cursorColor ??=
+            selectionTheme.cursorColor ?? cupertinoTheme.primaryColor;
+        selectionColor = selectionTheme.selectionColor ??
+            cupertinoTheme.primaryColor.withOpacity(0.40);
         cursorRadius ??= const Radius.circular(2.0);
-        cursorOffset = Offset(iOSHorizontalOffset / MediaQuery.of(context).devicePixelRatio, 0);
+        cursorOffset = Offset(
+            iOSHorizontalOffset / MediaQuery.of(context).devicePixelRatio, 0);
         break;
 
       case TargetPlatform.android:
@@ -293,7 +305,8 @@ class _ZefyrEditorState extends State<ZefyrEditor> implements EditorTextSelectio
         paintCursorAboveText = false;
         cursorOpacityAnimates = false;
         cursorColor ??= selectionTheme.cursorColor ?? theme.colorScheme.primary;
-        selectionColor = selectionTheme.selectionColor ?? theme.colorScheme.primary.withOpacity(0.40);
+        selectionColor = selectionTheme.selectionColor ??
+            theme.colorScheme.primary.withOpacity(0.40);
         break;
     }
 
@@ -341,7 +354,8 @@ class _ZefyrEditorState extends State<ZefyrEditor> implements EditorTextSelectio
   }
 }
 
-class _ZefyrEditorSelectionGestureDetectorBuilder extends EditorTextSelectionGestureDetectorBuilder {
+class _ZefyrEditorSelectionGestureDetectorBuilder
+    extends EditorTextSelectionGestureDetectorBuilder {
   _ZefyrEditorSelectionGestureDetectorBuilder({
     required _ZefyrEditorState state,
   })  : _state = state,
@@ -395,9 +409,11 @@ class _ZefyrEditorSelectionGestureDetectorBuilder extends EditorTextSelectionGes
     final segmentResult = line.lookup(result.offset);
     if (segmentResult.node == null) return false;
     final segment = segmentResult.node as LeafNode;
-    if (segment.style.contains(NotusAttribute.link) && editor.widget.onLaunchUrl != null) {
+    if (segment.style.contains(NotusAttribute.link) &&
+        editor.widget.onLaunchUrl != null) {
       if (editor.widget.readOnly) {
-        editor.widget.onLaunchUrl!(segment.style.get(NotusAttribute.link)!.value!);
+        editor.widget
+            .onLaunchUrl!(segment.style.get(NotusAttribute.link)!.value!);
         return true;
       } else {
         // TODO: Implement a toolbar to display the URL and allow to launch it.
@@ -427,6 +443,7 @@ class _ZefyrEditorSelectionGestureDetectorBuilder extends EditorTextSelectionGes
               renderEditor.selectPosition(cause: SelectionChangedCause.tap);
               break;
             case PointerDeviceKind.touch:
+            case PointerDeviceKind.trackpad:
             case PointerDeviceKind.unknown:
               // On macOS/iOS/iPadOS a touch tap places the cursor at the edge
               // of the word.
@@ -511,7 +528,9 @@ class RawEditor extends StatefulWidget {
         assert(minHeight == null || minHeight >= 0),
         assert(scrollAreaMinHeight == null || scrollAreaMinHeight >= 0),
         assert(
-          (maxHeight == null) || (minHeight == null) || (maxHeight >= minHeight),
+          (maxHeight == null) ||
+              (minHeight == null) ||
+              (maxHeight >= minHeight),
           'minHeight can\'t be greater than maxHeight',
         ),
         // keyboardType = keyboardType ?? TextInputType.multiline,
@@ -670,13 +689,18 @@ class RawEditor extends StatefulWidget {
   @override
   void debugFillProperties(DiagnosticPropertiesBuilder properties) {
     super.debugFillProperties(properties);
-    properties.add(DiagnosticsProperty<ZefyrController>('controller', controller));
+    properties
+        .add(DiagnosticsProperty<ZefyrController>('controller', controller));
     properties.add(DiagnosticsProperty<FocusNode>('focusNode', focusNode));
     properties.add(DoubleProperty('maxLines', maxHeight, defaultValue: null));
     properties.add(DoubleProperty('minLines', minHeight, defaultValue: null));
-    properties.add(DoubleProperty('scrollAreaMinHeight', scrollAreaMinHeight, defaultValue: null));
-    properties.add(DiagnosticsProperty<bool>('autofocus', autofocus, defaultValue: false));
-    properties.add(DiagnosticsProperty<ScrollPhysics>('scrollPhysics', scrollPhysics, defaultValue: null));
+    properties.add(DoubleProperty('scrollAreaMinHeight', scrollAreaMinHeight,
+        defaultValue: null));
+    properties.add(
+        DiagnosticsProperty<bool>('autofocus', autofocus, defaultValue: false));
+    properties.add(DiagnosticsProperty<ScrollPhysics>(
+        'scrollPhysics', scrollPhysics,
+        defaultValue: null));
   }
 }
 
@@ -733,7 +757,8 @@ class RawEditorState extends EditorState
 
   ScrollController? _scrollController;
 
-  final ClipboardStatusNotifier? _clipboardStatus = kIsWeb ? null : ClipboardStatusNotifier();
+  final ClipboardStatusNotifier? _clipboardStatus =
+      kIsWeb ? null : ClipboardStatusNotifier();
   final LayerLink _toolbarLayerLink = LayerLink();
   final LayerLink _startHandleLayerLink = LayerLink();
   final LayerLink _endHandleLayerLink = LayerLink();
@@ -754,7 +779,8 @@ class RawEditorState extends EditorState
   ///
   /// This property is typically used to notify the renderer of input gestures.
   @override
-  RenderEditor get renderEditor => _editorKey.currentContext!.findRenderObject() as RenderEditor;
+  RenderEditor get renderEditor =>
+      _editorKey.currentContext!.findRenderObject() as RenderEditor;
 
   /// Express interest in interacting with the keyboard.
   ///
@@ -830,10 +856,12 @@ class RawEditorState extends EditorState
       onShortcut: handleShortcut,
       onDelete: handleDelete,
     );
-    clipboardController = widget.clipboardController ?? SimpleClipboardController();
+    clipboardController =
+        widget.clipboardController ?? SimpleClipboardController();
 
     // Focus
-    _focusAttachment = widget.focusNode.attach(context, onKey: (node, event) => _keyboardListener.handleKeyEvent(event));
+    _focusAttachment = widget.focusNode.attach(context,
+        onKey: (node, event) => _keyboardListener.handleKeyEvent(event));
     widget.focusNode.addListener(_handleFocusChanged);
   }
 
@@ -842,7 +870,9 @@ class RawEditorState extends EditorState
     super.didChangeDependencies();
     final parentTheme = ZefyrTheme.of(context, nullOk: true);
     final fallbackTheme = ZefyrThemeData.fallback(context);
-    _themeData = (parentTheme != null) ? fallbackTheme.merge(parentTheme) : fallbackTheme;
+    _themeData = (parentTheme != null)
+        ? fallbackTheme.merge(parentTheme)
+        : fallbackTheme;
 
     if (!_didAutoFocus && widget.autofocus) {
       FocusScope.of(context).autofocus(widget.focusNode);
@@ -851,7 +881,8 @@ class RawEditorState extends EditorState
   }
 
   bool _shouldShowSelectionHandles() {
-    return widget.showSelectionHandles && !widget.controller.selection.isCollapsed;
+    return widget.showSelectionHandles &&
+        !widget.controller.selection.isCollapsed;
   }
 
   @override
@@ -867,7 +898,8 @@ class RawEditorState extends EditorState
       updateRemoteValueIfNeeded();
     }
 
-    if (widget.scrollController != null && widget.scrollController != _scrollController) {
+    if (widget.scrollController != null &&
+        widget.scrollController != _scrollController) {
       _scrollController!.removeListener(_updateSelectionOverlayForScroll);
       _scrollController = widget.scrollController;
       _scrollController!.addListener(_updateSelectionOverlayForScroll);
@@ -876,7 +908,8 @@ class RawEditorState extends EditorState
     if (widget.focusNode != oldWidget.focusNode) {
       oldWidget.focusNode.removeListener(_handleFocusChanged);
       _focusAttachment?.detach();
-      _focusAttachment = widget.focusNode.attach(context, onKey: (node, event) => _keyboardListener.handleKeyEvent(event));
+      _focusAttachment = widget.focusNode.attach(context,
+          onKey: (node, event) => _keyboardListener.handleKeyEvent(event));
       widget.focusNode.addListener(_handleFocusChanged);
       updateKeepAlive();
     }
@@ -932,7 +965,8 @@ class RawEditorState extends EditorState
 
     _showCaretOnScreen();
     updateRemoteValueIfNeeded();
-    _cursorController!.startOrStopCursorTimerIfNeeded(_hasFocus, widget.controller.selection);
+    _cursorController!
+        .startOrStopCursorTimerIfNeeded(_hasFocus, widget.controller.selection);
     if (hasConnection) {
       // To keep the cursor from blinking while typing, we want to restart the
       // cursor timer every time a new character is typed.
@@ -946,7 +980,8 @@ class RawEditorState extends EditorState
     // a new RenderEditableBox child. If we try to update selection overlay
     // immediately it'll not be able to find the new child since it hasn't been
     // built yet.
-    SchedulerBinding.instance!.addPostFrameCallback((Duration _) => _updateOrDisposeSelectionOverlayIfNeeded());
+    SchedulerBinding.instance.addPostFrameCallback(
+        (Duration _) => _updateOrDisposeSelectionOverlayIfNeeded());
 //    _textChangedSinceLastCaretUpdate = true;
 
     setState(() {
@@ -954,7 +989,8 @@ class RawEditorState extends EditorState
     });
   }
 
-  void _handleSelectionChanged(TextSelection selection, SelectionChangedCause cause) {
+  void _handleSelectionChanged(
+      TextSelection selection, SelectionChangedCause cause) {
     widget.controller.updateSelection(selection, source: ChangeSource.local);
 
     _selectionOverlay?.handlesVisible = _shouldShowSelectionHandles();
@@ -966,13 +1002,12 @@ class RawEditorState extends EditorState
 
   void _handleFocusChanged() {
     openOrCloseConnection();
-
-    _cursorController!.startOrStopCursorTimerIfNeeded(_hasFocus, widget.controller.selection);
-    SchedulerBinding.instance!.addPostFrameCallback((Duration _) => _updateOrDisposeSelectionOverlayIfNeeded());
+    SchedulerBinding.instance.addPostFrameCallback(
+        (Duration _) => _updateOrDisposeSelectionOverlayIfNeeded());
 
     if (_hasFocus) {
       // Listen for changing viewInsets, which indicates keyboard showing up.
-      WidgetsBinding.instance!.addObserver(this);
+      WidgetsBinding.instance.addObserver(this);
       _showCaretOnScreen();
 //      _lastBottomViewInset = WidgetsBinding.instance.window.viewInsets.bottom;
 //      if (!_value.selection.isValid) {
@@ -980,7 +1015,7 @@ class RawEditorState extends EditorState
 //        _handleSelectionChanged(TextSelection.collapsed(offset: _value.text.length), renderEditable, null);
 //      }
     } else {
-      WidgetsBinding.instance!.removeObserver(this);
+      WidgetsBinding.instance.removeObserver(this);
       // TODO: teach editor about state of the toolbar and whether the user is in the middle of applying styles.
       //       this is needed because some buttons in toolbar can steal focus from the editor
       //       but we want to preserve the selection, maybe adjusting its style slightly.
@@ -1040,11 +1075,12 @@ class RawEditorState extends EditorState
     }
 
     _showCaretOnScreenScheduled = true;
-    SchedulerBinding.instance!.addPostFrameCallback((Duration _) {
+    SchedulerBinding.instance.addPostFrameCallback((Duration _) {
       _showCaretOnScreenScheduled = false;
 
       final viewport = RenderAbstractViewport.of(renderEditor)!;
-      final editorOffset = renderEditor.localToGlobal(Offset(0.0, 0.0), ancestor: viewport);
+      final editorOffset =
+          renderEditor.localToGlobal(Offset(0.0, 0.0), ancestor: viewport);
 
       final offsetInViewport = _scrollController!.offset + editorOffset.dy;
 
@@ -1104,7 +1140,8 @@ class RawEditorState extends EditorState
       /// the scroll view with [BaselineProxy] which mimics the editor's
       /// baseline.
       // This implies that the first line has no styles applied to it.
-      final baselinePadding = EdgeInsets.only(top: _themeData!.paragraph.spacing.top!);
+      final baselinePadding =
+          EdgeInsets.only(top: _themeData!.paragraph.spacing.top!);
       child = BaselineProxy(
         textStyle: _themeData!.paragraph.style,
         padding: baselinePadding,
@@ -1121,7 +1158,11 @@ class RawEditorState extends EditorState
       );
     }
 
-    final constraints = widget.expands ? BoxConstraints.expand() : BoxConstraints(minHeight: widget.minHeight ?? 0.0, maxHeight: widget.maxHeight ?? double.infinity);
+    final constraints = widget.expands
+        ? BoxConstraints.expand()
+        : BoxConstraints(
+            minHeight: widget.minHeight ?? 0.0,
+            maxHeight: widget.maxHeight ?? double.infinity);
 
     return ZefyrTheme(
       data: _themeData!,
@@ -1168,7 +1209,9 @@ class RawEditorState extends EditorState
           selectionColor: widget.selectionColor,
           enableInteractiveSelection: widget.enableInteractiveSelection,
           hasFocus: _hasFocus,
-          contentPadding: (block == NotusAttribute.block.code) ? EdgeInsets.all(16.0) : null,
+          contentPadding: (block == NotusAttribute.block.code)
+              ? EdgeInsets.all(16.0)
+              : null,
           embedBuilder: widget.embedBuilder,
           checkboxListener: _toggleCheckbox,
         ));
@@ -1183,7 +1226,8 @@ class RawEditorState extends EditorState
     if (checked) {
       widget.controller.formatText(documentOffset, 0, NotusAttribute.checked);
     } else {
-      widget.controller.formatText(documentOffset, 0, NotusAttribute.checked.unset);
+      widget.controller
+          .formatText(documentOffset, 0, NotusAttribute.checked.unset);
     }
   }
 
@@ -1234,7 +1278,8 @@ class RawEditorState extends EditorState
   }
 
   @override
-  void userUpdateTextEditingValue(TextEditingValue value, SelectionChangedCause cause) {
+  void userUpdateTextEditingValue(
+      TextEditingValue value, SelectionChangedCause cause) {
     textEditingValue = value;
   }
 
@@ -1284,6 +1329,27 @@ class RawEditorState extends EditorState
       bringIntoView(textEditingValue.selection.extent);
     }
   }
+
+  @override
+  void insertTextPlaceholder(Size size) {
+    // TODO: implement insertTextPlaceholder
+  }
+
+  @override
+  void removeTextPlaceholder() {
+    // TODO: implement removeTextPlaceholder
+  }
+
+  @override
+  void didChangeInputControl(
+      TextInputControl? oldControl, TextInputControl? newControl) {
+    // TODO: implement didChangeInputControl
+  }
+
+  @override
+  void performSelector(String selectorName) {
+    // TODO: implement performSelector
+  }
 }
 
 class _Editor extends MultiChildRenderObjectWidget {
@@ -1324,7 +1390,8 @@ class _Editor extends MultiChildRenderObjectWidget {
   }
 
   @override
-  void updateRenderObject(BuildContext context, covariant RenderEditor renderObject) {
+  void updateRenderObject(
+      BuildContext context, covariant RenderEditor renderObject) {
     renderObject.document = document;
     renderObject.node = document.root;
     renderObject.textDirection = textDirection;

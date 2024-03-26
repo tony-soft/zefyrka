@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
@@ -203,6 +205,10 @@ mixin RawEditorStateTextInputClientMixin on EditorState implements TextInputClie
 
   @override
   void connectionClosed() {
+    log('connectionClosed() hasConnection = $hasConnection');
+    // todo: 안드로이드 폰 삼성 키보드에서 하드웨어 키보드로 한 글자를 입력하고 나면 추가 입력이 불가능하므로 여기에서 리턴하도록 수정함
+    return;
+
     if (hasConnection) {
       _textInputConnection!.connectionClosedReceived();
       _textInputConnection = null;

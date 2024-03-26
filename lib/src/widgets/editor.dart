@@ -5,25 +5,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter/widgets.dart';
-import 'package:notus_format/notus_format.dart';
-import 'package:zefyrka/src/services/clipboard_controller.dart';
-import 'package:zefyrka/src/services/simple_clipboard_controller.dart';
 import 'package:zefyrka/src/widgets/baseline_proxy.dart';
 import 'package:zefyrka/zefyrka.dart';
 
-import '../rendering/editor.dart';
 import '../services/keyboard.dart' as keyboard;
-import 'controller.dart';
-import 'cursor.dart';
 import 'editable_text_block.dart';
 import 'editable_text_line.dart';
 import 'editor_input_client_mixin.dart';
 import 'editor_keyboard_mixin.dart';
 import 'editor_selection_delegate_mixin.dart';
-import 'text_line.dart';
 import 'text_selection.dart';
-import 'theme.dart';
 
 /// Builder function for embeddable objects in [ZefyrEditor].
 typedef ZefyrEmbedBuilder = Widget Function(BuildContext context, EmbedNode node);
@@ -191,7 +182,7 @@ class ZefyrEditor extends StatefulWidget {
   final bool? showSelectionHandles;
 
   /// Callback to invoke when user wants to launch a URL.
-  final ValueChanged<String>? onLaunchUrl;
+  final ValueChanged<Uri>? onLaunchUrl;
 
   final VoidCallback? onTap;
 
@@ -397,8 +388,8 @@ class _ZefyrEditorSelectionGestureDetectorBuilder extends EditorTextSelectionGes
     final segment = segmentResult.node as LeafNode;
     if (segment.style.contains(NotusAttribute.link) && editor.widget.onLaunchUrl != null) {
       if (editor.widget.readOnly) {
-        editor.widget.onLaunchUrl!(segment.style.get(NotusAttribute.link)!.value!);
-        return true;
+        final url = Uri.parse(segment.style.get(NotusAttribute.link)!.value!);
+        editor.widget.onLaunchUrl!(url);
       } else {
         // TODO: Implement a toolbar to display the URL and allow to launch it.
         // editor.showToolbar();
@@ -427,6 +418,7 @@ class _ZefyrEditorSelectionGestureDetectorBuilder extends EditorTextSelectionGes
               renderEditor.selectPosition(cause: SelectionChangedCause.tap);
               break;
             case PointerDeviceKind.touch:
+            case PointerDeviceKind.trackpad:
             case PointerDeviceKind.unknown:
               // On macOS/iOS/iPadOS a touch tap places the cursor at the edge
               // of the word.
@@ -545,7 +537,7 @@ class RawEditor extends StatefulWidget {
 
   /// Callback which is triggered when the user wants to open a URL from
   /// a link in the document.
-  final ValueChanged<String>? onLaunchUrl;
+  final ValueChanged<Uri>? onLaunchUrl;
 
   /// Configuration of toolbar options.
   ///
@@ -946,7 +938,8 @@ class RawEditorState extends EditorState
     // a new RenderEditableBox child. If we try to update selection overlay
     // immediately it'll not be able to find the new child since it hasn't been
     // built yet.
-    SchedulerBinding.instance!.addPostFrameCallback((Duration _) => _updateOrDisposeSelectionOverlayIfNeeded());
+    SchedulerBinding.instance.addPostFrameCallback(
+        (Duration _) => _updateOrDisposeSelectionOverlayIfNeeded());
 //    _textChangedSinceLastCaretUpdate = true;
 
     setState(() {
@@ -967,12 +960,14 @@ class RawEditorState extends EditorState
   void _handleFocusChanged() {
     openOrCloseConnection();
 
-    _cursorController!.startOrStopCursorTimerIfNeeded(_hasFocus, widget.controller.selection);
-    SchedulerBinding.instance!.addPostFrameCallback((Duration _) => _updateOrDisposeSelectionOverlayIfNeeded());
+    _cursorController!
+        .startOrStopCursorTimerIfNeeded(_hasFocus, widget.controller.selection);
+    SchedulerBinding.instance.addPostFrameCallback(
+        (Duration _) => _updateOrDisposeSelectionOverlayIfNeeded());
 
     if (_hasFocus) {
       // Listen for changing viewInsets, which indicates keyboard showing up.
-      WidgetsBinding.instance!.addObserver(this);
+      WidgetsBinding.instance.addObserver(this);
       _showCaretOnScreen();
 //      _lastBottomViewInset = WidgetsBinding.instance.window.viewInsets.bottom;
 //      if (!_value.selection.isValid) {
@@ -980,7 +975,7 @@ class RawEditorState extends EditorState
 //        _handleSelectionChanged(TextSelection.collapsed(offset: _value.text.length), renderEditable, null);
 //      }
     } else {
-      WidgetsBinding.instance!.removeObserver(this);
+      WidgetsBinding.instance.removeObserver(this);
       // TODO: teach editor about state of the toolbar and whether the user is in the middle of applying styles.
       //       this is needed because some buttons in toolbar can steal focus from the editor
       //       but we want to preserve the selection, maybe adjusting its style slightly.
@@ -1040,11 +1035,12 @@ class RawEditorState extends EditorState
     }
 
     _showCaretOnScreenScheduled = true;
-    SchedulerBinding.instance!.addPostFrameCallback((Duration _) {
+    SchedulerBinding.instance.addPostFrameCallback((Duration _) {
       _showCaretOnScreenScheduled = false;
 
-      final viewport = RenderAbstractViewport.of(renderEditor)!;
-      final editorOffset = renderEditor.localToGlobal(Offset(0.0, 0.0), ancestor: viewport);
+      final viewport = RenderAbstractViewport.of(renderEditor);
+      final editorOffset =
+          renderEditor.localToGlobal(Offset(0.0, 0.0), ancestor: viewport);
 
       final offsetInViewport = _scrollController!.offset + editorOffset.dy;
 
@@ -1284,6 +1280,44 @@ class RawEditorState extends EditorState
       bringIntoView(textEditingValue.selection.extent);
     }
   }
+
+  @override
+  void insertTextPlaceholder(Size size) {
+    // TODO: implement insertTextPlaceholder
+  }
+
+  @override
+  void removeTextPlaceholder() {
+    // TODO: implement removeTextPlaceholder
+  }
+
+  @override
+  void didChangeInputControl(
+      TextInputControl? oldControl, TextInputControl? newControl) {
+    // TODO: implement didChangeInputControl
+  }
+
+  @override
+  void performSelector(String selectorName) {
+    // TODO: implement performSelector
+  }
+
+  @override
+  void insertContent(KeyboardInsertedContent content) {
+    // TODO: implement insertContent
+  }
+
+  @override
+  bool get liveTextInputEnabled => false;
+
+  @override
+  bool get lookUpEnabled => true;
+
+  @override
+  bool get searchWebEnabled => true;
+
+  @override
+  bool get shareEnabled => true;
 }
 
 class _Editor extends MultiChildRenderObjectWidget {

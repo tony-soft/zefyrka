@@ -18,6 +18,9 @@ import 'package:flutter/services.dart';
 import '../rendering/editor.dart';
 import 'editor.dart';
 
+typedef DragSelectionUpdateCallback = void Function(
+    DragStartDetails startDetails, DragUpdateDetails updateDetails);
+
 /// A duration that controls how often the drag selection update callback is
 /// called.
 const Duration _kDragSelectionUpdateThrottle = Duration(milliseconds: 50);
@@ -169,9 +172,9 @@ class EditorTextSelectionOverlay {
     _handlesVisible = visible;
     // If we are in build state, it will be too late to update visibility.
     // We will need to schedule the build in next frame.
-    if (SchedulerBinding.instance!.schedulerPhase ==
+    if (SchedulerBinding.instance.schedulerPhase ==
         SchedulerPhase.persistentCallbacks) {
-      SchedulerBinding.instance!.addPostFrameCallback(_markNeedsBuild);
+      SchedulerBinding.instance.addPostFrameCallback(_markNeedsBuild);
     } else {
       _markNeedsBuild();
     }
@@ -189,7 +192,7 @@ class EditorTextSelectionOverlay {
               _buildHandle(context, _TextSelectionHandlePosition.end)),
     ];
 
-    Overlay.of(context, rootOverlay: true, debugRequiredFor: debugRequiredFor)!
+    Overlay.of(context, rootOverlay: true, debugRequiredFor: debugRequiredFor)
         .insertAll(_handles!);
   }
 
@@ -206,7 +209,7 @@ class EditorTextSelectionOverlay {
   void showToolbar() {
     assert(_toolbar == null);
     _toolbar = OverlayEntry(builder: _buildToolbar);
-    Overlay.of(context, rootOverlay: true, debugRequiredFor: debugRequiredFor)!
+    Overlay.of(context, rootOverlay: true, debugRequiredFor: debugRequiredFor)
         .insert(_toolbar!);
     _toolbarController.forward(from: 0.0);
   }
@@ -223,9 +226,9 @@ class EditorTextSelectionOverlay {
   void update(TextEditingValue newValue) {
     if (_value == newValue) return;
     _value = newValue;
-    if (SchedulerBinding.instance!.schedulerPhase ==
+    if (SchedulerBinding.instance.schedulerPhase ==
         SchedulerPhase.persistentCallbacks) {
-      SchedulerBinding.instance!.addPostFrameCallback(_markNeedsBuild);
+      SchedulerBinding.instance.addPostFrameCallback(_markNeedsBuild);
     } else {
       _markNeedsBuild();
     }
@@ -367,8 +370,10 @@ class EditorTextSelectionOverlay {
         textPosition = newSelection.extent;
         break;
     }
-    selectionDelegate.textEditingValue =
-        _value.copyWith(selection: newSelection, composing: TextRange.empty);
+    selectionDelegate.userUpdateTextEditingValue(
+      _value.copyWith(selection: newSelection, composing: TextRange.empty),
+      SelectionChangedCause.drag,
+    );
     selectionDelegate.bringIntoView(textPosition);
   }
 }
@@ -1245,7 +1250,8 @@ class _EditorTextSelectionGestureDetectorState
       gestures[LongPressGestureRecognizer] =
           GestureRecognizerFactoryWithHandlers<LongPressGestureRecognizer>(
         () => LongPressGestureRecognizer(
-            debugOwner: this, kind: PointerDeviceKind.touch),
+            debugOwner: this,
+            supportedDevices: Set.of({PointerDeviceKind.touch})),
         (LongPressGestureRecognizer instance) {
           instance
             ..onLongPressStart = _handleLongPressStart
@@ -1263,7 +1269,8 @@ class _EditorTextSelectionGestureDetectorState
       gestures[HorizontalDragGestureRecognizer] =
           GestureRecognizerFactoryWithHandlers<HorizontalDragGestureRecognizer>(
         () => HorizontalDragGestureRecognizer(
-            debugOwner: this, kind: PointerDeviceKind.mouse),
+            debugOwner: this,
+            supportedDevices: Set.of({PointerDeviceKind.mouse})),
         (HorizontalDragGestureRecognizer instance) {
           instance
             // Text selection should start from the position of the first pointer

@@ -269,7 +269,7 @@ Widget defaultToggleStyleButtonBuilder(
           ? theme.primaryIconTheme.color
           : theme.iconTheme.color
       : theme.disabledColor;
-  final fillColor = isToggled ? theme.toggleableActiveColor : theme.canvasColor;
+  final fillColor = isToggled ? theme.colorScheme.secondary : theme.canvasColor;
 
   if (child == null) {
     if (icon != null) {
@@ -820,7 +820,7 @@ class _SubToolbarButtonState extends State<SubToolbarButton> {
     var theme = Theme.of(context);
     var isToggled = _value != null;
     final iconColor = isToggled ? theme.primaryIconTheme.color : theme.iconTheme.color;
-    final fillColor = isToggled ? theme.toggleableActiveColor : theme.canvasColor;
+    final fillColor = isToggled ? theme.colorScheme.secondary : theme.canvasColor;
 
     return ZIconButton(
       highlightElevation: 0,
